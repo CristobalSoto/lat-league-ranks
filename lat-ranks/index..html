@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player Rankings</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">LAT Player Rankings</h1>
+        
+        <!-- Top Rankings Table -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Nickname
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Rank
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Rating
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Wins
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Losses
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Win Rate
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Gateway
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200" id="players-table-body">
+                    <!-- Data will be populated by JavaScript -->
+                    <tr>
+                        <td colspan="8" class="px-6 py-4 text-center text-sm text-gray-500">
+                            Loading player data...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchLatPlayers();
+        });
+
+        async function fetchLatPlayers() {
+            try {
+                // First fetch all LAT- players
+                const response = await fetch("https://xmploueumzkrdvapbyfs.supabase.co/rest/v1/search_player_view?select=alias%2Cgateway%2Cgateway_name%2Crank&alias=ilike.lat-%25", {
+                    headers: {
+                        "accept": "*/*",
+                        "accept-profile": "public",
+                        "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhtcGxvdWV1bXprcmR2YXBieWZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NzI4ODY5MTQsImV4cCI6MTk4ODQ2MjkxNH0.p8Jkm2fnFzzy7YYdCs0NVjBdqLmUzvBFJjdf3V0bHuo",
+                        "authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhtcGxvdWV1bXprcmR2YXBieWZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NzI4ODY5MTQsImV4cCI6MTk4ODQ2MjkxNH0.p8Jkm2fnFzzy7YYdCs0NVjBdqLmUzvBFJjdf3V0bHuo"
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch LAT players');
+                }
+
+                const latPlayers = await response.json();
+                
+                // Then fetch detailed profile for each player
+                const playersWithDetails = await Promise.all(latPlayers.map(async player => {
+                    try {
+                        const profileResponse = await fetch(`https://xmploueumzkrdvapbyfs.supabase.co/rest/v1/player_profile_view?select=*&alias=eq.${encodeURIComponent(player.alias)}&gateway=eq.${player.gateway}`, {
+                            headers: {
+                                "accept": "*/*",
+                                "accept-profile": "public",
+                                "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhtcGxvdWV1bXprcmR2YXBieWZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NzI4ODY5MTQsImV4cCI6MTk4ODQ2MjkxNH0.p8Jkm2fnFzzy7YYdCs0NVjBdqLmUzvBFJjdf3V0bHuo",
+                                "authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhtcGxvdWV1bXprcmR2YXBieWZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NzI4ODY5MTQsImV4cCI6MTk4ODQ2MjkxNH0.p8Jkm2fnFzzy7YYdCs0NVjBdqLmUzvBFJjdf3V0bHuo"
+                            }
+                        });
+
+                        if (profileResponse.ok) {
+                            const profileData = await profileResponse.json();
+                            return {
+                                ...player,
+                                rating: profileData[0]?.rating || 0,
+                                wins: profileData[0]?.wins || 0,
+                                losses: profileData[0]?.losses || 0,
+                                standing: profileData[0]?.standing || 0
+                            };
+                        }
+                        return {
+                            ...player,
+                            rating: 0,
+                            wins: 0,
+                            losses: 0,
+                            standing: 0
+                        };
+                    } catch (e) {
+                        console.error(`Error fetching profile for ${player.alias}:`, e);
+                        return {
+                            ...player,
+                            rating: 0,
+                            wins: 0,
+                            losses: 0,
+                            standing: 0
+                        };
+                    }
+                }));
+
+                // Sort by rating (highest first)
+                playersWithDetails.sort((a, b) => b.rating - a.rating);
+                
+                populateTable(playersWithDetails);
+            } catch (error) {
+                console.error('Error loading LAT players:', error);
+                document.getElementById('players-table-body').innerHTML = `
+                    <tr>
+                        <td colspan="8" class="px-6 py-4 text-center text-sm text-red-500">
+                            Error loading player data. Please try again later.
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function populateTable(players) {
+            const tableBody = document.getElementById('players-table-body');
+            
+            if (players.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="px-6 py-4 text-center text-sm text-gray-500">
+                            No LAT players found.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tableBody.innerHTML = players.map(player => {
+                const winRate = player.wins + player.losses > 0 
+                    ? Math.round((player.wins / (player.wins + player.losses)) * 100)
+                    : 0;
+                
+                
+                return `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            ${player.alias || 'Anonymous'}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium ${getRankColorClass(player.rank)}">
+                            ${player.rank || 'Unranked'}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            ${player.rating}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            ${player.wins}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            ${player.losses}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            ${winRate}%
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            ${player.gateway_name || player.gateway || 'Unknown'}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function getRankColorClass(rank) {
+            if (!rank) return 'text-gray-400';
+            switch(rank) {
+                case 'S': return 'text-purple-600';
+                case 'A': return 'text-red-500';
+                case 'B': return 'text-yellow-500';
+                case 'C': return 'text-blue-500';
+                case 'D': return 'text-green-500';
+                case 'E': return 'text-gray-500';
+                default: return 'text-gray-400';
+            }
+        }
+    </script>
+</body>
+</html>
