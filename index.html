@@ -7,53 +7,55 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100">
-    <div class="container mx-auto px-48 py-8">
-        <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">LAT Player Rankings</h1>
+    <div class="container mx-auto px-4 sm:px-12 md:px-24 lg:px-36 py-8">
+        <h1 class="text-2xl sm:text-3xl font-bold text-center text-gray-800 mb-8">LAT Player Rankings</h1>
         
-        <!-- Top Rankings Table -->
-        <div class="bg-white rounded-lg shadow overflow-hidden">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            #
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Nickname
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Rank
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Rating
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Wins
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Losses
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Total Games (Qualified?)
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Gateway
-                        </th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200" id="players-table-body">
-                    <!-- Data will be populated by JavaScript -->
-                    <tr>
-                        <td colspan="9" class="px-6 py-4 text-center text-sm text-gray-500">
-                            Loading player data...
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+        <!-- Wrap table in a scrollable container for mobile -->
+        <div class="overflow-x-auto">
+            <div class="bg-white rounded-lg shadow min-w-max">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                #
+                            </th>
+                            <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Nickname
+                            </th>
+                            <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Rank
+                            </th>
+                            <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Rating
+                            </th>
+                            <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Wins
+                            </th>
+                            <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Losses
+                            </th>
+                            <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Total Games (Qualified?)
+                            </th>
+                            <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Gateway
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200" id="players-table-body">
+                        <tr>
+                            <td colspan="9" class="px-6 py-4 text-center text-sm text-gray-500">
+                                Loading player data...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <script>
+        // Your existing JavaScript remains unchanged
         document.addEventListener('DOMContentLoaded', function() {
             fetchLatPlayers();
         });
@@ -153,28 +155,28 @@
                 
                 return `
                     <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">
+                        <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">
                             ${index + 1}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                             ${player.alias || 'Anonymous'}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium ${getRankColorClass(player.rank)}">
+                        <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium ${getRankColorClass(player.rank)}">
                             ${player.rank || 'Unranked'}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             ${player.rating}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             ${player.wins}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             ${player.losses}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             ${totalGames} ${qualified}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             ${player.gateway_name || player.gateway || 'Unknown'}
                         </td>
                     </tr>
