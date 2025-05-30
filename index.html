@@ -78,46 +78,17 @@
 
                 const latPlayers = await response.json();
                 
-                // Then fetch detailed profile for each player
-                const playersWithDetails = await Promise.all(latPlayers.map(async player => {
-                    try {
-                        const profileResponse = await fetch(`https://xmploueumzkrdvapbyfs.supabase.co/rest/v1/player_profile_view?select=*&alias=eq.${encodeURIComponent(player.alias)}&gateway=eq.${player.gateway}`, {
-                            headers: {
-                                "accept": "*/*",
-                                "accept-profile": "public",
-                                "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhtcGxvdWV1bXprcmR2YXBieWZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NzI4ODY5MTQsImV4cCI6MTk4ODQ2MjkxNH0.p8Jkm2fnFzzy7YYdCs0NVjBdqLmUzvBFJjdf3V0bHuo",
-                                "authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhtcGxvdWV1bXprcmR2YXBieWZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NzI4ODY5MTQsImV4cCI6MTk4ODQ2MjkxNH0.p8Jkm2fnFzzy7YYdCs0NVjBdqLmUzvBFJjdf3V0bHuo"
-                            }
-                        });
-
-                        if (profileResponse.ok) {
-                            const profileData = await profileResponse.json();
-                            return {
-                                ...player,
-                                rating: profileData[0]?.rating || 0,
-                                wins: profileData[0]?.wins || 0,
-                                losses: profileData[0]?.losses || 0,
-                                standing: profileData[0]?.standing || 0
-                            };
-                        }
-                        return {
-                            ...player,
-                            rating: 0,
-                            wins: 0,
-                            losses: 0,
-                            standing: 0
-                        };
-                    } catch (e) {
-                        console.error(`Error fetching profile for ${player.alias}:`, e);
-                        return {
-                            ...player,
-                            rating: 0,
-                            wins: 0,
-                            losses: 0,
-                            standing: 0
-                        };
-                    }
-                }));
+                // Show loading state with player count
+                document.getElementById('players-table-body').innerHTML = `
+                    <tr>
+                        <td colspan="8" class="px-6 py-4 text-center text-sm text-gray-500">
+                            Loading ${latPlayers.length} player profiles...
+                        </td>
+                    </tr>
+                `;
+                
+                // Batch fetch player profiles with concurrency limit
+                const playersWithDetails = await fetchPlayerProfilesBatch(latPlayers);
 
                 // Sort by rating (highest first)
                 playersWithDetails.sort((a, b) => b.rating - a.rating);
@@ -127,12 +98,73 @@
                 console.error('Error loading LAT players:', error);
                 document.getElementById('players-table-body').innerHTML = `
                     <tr>
-                        <td colspan="9" class="px-6 py-4 text-center text-sm text-red-500">
+                        <td colspan="8" class="px-6 py-4 text-center text-sm text-red-500">
                             Error loading player data. Please try again later.
                         </td>
                     </tr>
                 `;
             }
+        }
+
+        async function fetchPlayerProfilesBatch(players, batchSize = 10) {
+            const results = [];
+            
+            // Process players in batches to avoid overwhelming the API
+            for (let i = 0; i < players.length; i += batchSize) {
+                const batch = players.slice(i, i + batchSize);
+                
+                // Fetch batch concurrently
+                const batchPromises = batch.map(player => fetchPlayerProfile(player));
+                const batchResults = await Promise.allSettled(batchPromises);
+                
+                // Process results and handle failures gracefully
+                batchResults.forEach((result, index) => {
+                    if (result.status === 'fulfilled') {
+                        results.push(result.value);
+                    } else {
+                        console.error(`Error fetching profile for ${batch[index].alias}:`, result.reason);
+                        // Add player with default values if fetch failed
+                        results.push({
+                            ...batch[index],
+                            rating: 0,
+                            wins: 0,
+                            losses: 0,
+                            standing: 0
+                        });
+                    }
+                });
+                
+                // Optional: Add a small delay between batches to be API-friendly
+                if (i + batchSize < players.length) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+            }
+            
+            return results;
+        }
+
+        async function fetchPlayerProfile(player) {
+            const profileResponse = await fetch(`https://xmploueumzkrdvapbyfs.supabase.co/rest/v1/player_profile_view?select=*&alias=eq.${encodeURIComponent(player.alias)}&gateway=eq.${player.gateway}`, {
+                headers: {
+                    "accept": "*/*",
+                    "accept-profile": "public",
+                    "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhtcGxvdWV1bXprcmR2YXBieWZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NzI4ODY5MTQsImV4cCI6MTk4ODQ2MjkxNH0.p8Jkm2fnFzzy7YYdCs0NVjBdqLmUzvBFJjdf3V0bHuo",
+                    "authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhtcGxvdWV1bXprcmR2YXBieWZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NzI4ODY5MTQsImV4cCI6MTk4ODQ2MjkxNH0.p8Jkm2fnFzzy7YYdCs0NVjBdqLmUzvBFJjdf3V0bHuo"
+                }
+            });
+
+            if (!profileResponse.ok) {
+                throw new Error(`Failed to fetch profile for ${player.alias}`);
+            }
+
+            const profileData = await profileResponse.json();
+            return {
+                ...player,
+                rating: profileData[0]?.rating || 0,
+                wins: profileData[0]?.wins || 0,
+                losses: profileData[0]?.losses || 0,
+                standing: profileData[0]?.standing || 0
+            };
         }
 
         function populateTable(players) {
